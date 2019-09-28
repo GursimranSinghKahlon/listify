@@ -1,2 +1,2 @@
 # listify
-Smart List (Concurrent list updation in group chat)
+NexGen-List (Concurrent data updation in group chat)
