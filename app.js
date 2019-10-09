@@ -18,7 +18,7 @@ var fs = require('fs');
 var $ = require('jquery');
 
 
-
+require('dotenv').config();
 mongoose.set('bufferCommands', false);
 var mongoDB = "mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@cluster0-tynch.mongodb.net/test?retryWrites=true&w=majority";
 mongoose.connect(mongoDB);

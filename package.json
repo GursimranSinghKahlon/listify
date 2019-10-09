@@ -17,6 +17,7 @@
     "cryptiles": "^4.1.2",
     "debug": "~2.6.9",
     "dompurify": "^1.0.10",
+    "dotenv": "^8.1.0",
     "ejs": "~2.5.7",
     "email-existence": "^0.1.6",
     "ent": "^2.2.0",
