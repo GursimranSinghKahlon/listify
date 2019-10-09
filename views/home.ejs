@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>SmartList</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="description" content="Float data">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<!-- < include ./partials/header_imports >  -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.6/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+
+		<!-- 
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.6/css/mdb.min.css" />
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.6/js/mdb.min.js"></script>
+		 -->
+	</head>
+	<!-- #44484f -->
+	<body style="background-color:#2e2e2ffa">
+
+		<div class="super_container">
+			
+		<!-- Flash -->				
+		<div class="container-fluid text-center" id="pushMessage" style="z-index: 100;position: relative;top: 2%;">
+			<% if(error && error.length > 0) { %>
+					<div class="alert alert-danger" role="alert"><%= error %></div>
+			<% } else if(success && success.length > 0){ %>		
+					<div class="alert alert-success" role="alert"><%= success %></div>
+			<% } %>
+		</div> 
+		<!-- Flash -->
+
+		<!-- Header -->
+		<!-- < include ./partials/header %> -->
+		<nav class="navbar sticky-top navbar-dark bg-dark">
+			<!-- Navbar content -->
+			<a class="navbar-brand" style="text-color:#fff" href="/">SmartList <sup>&copy;</sup></a>
+			<span class="navbar-text text-center" >
+					A quick way to collaborate and make list
+			</span>
+			
+		</nav>
+
+
+<style>
+	h2 {
+		color: white;
+		text-shadow: 1px 1px 2px black, 0 0 30px blue, 0 0 5px darkblue;
+	}
+	.container-inner {
+		box-shadow: 1px 1px 2px black, 0 0 15px buttonface, 0 0 5px  darkblue;
+	}
+	button {
+		border: 10px solid #2e2e2f;
+		box-shadow: 1px 1px 2px black, 0 0 15px buttonface, 0 0 5px  darkblue;
+	}
+	button:hover {
+		color: white;
+		text-shadow: 1px 1px 2px black, 0 0 30px blue, 0 0 5px darkblue;
+		box-shadow: 1px 1px 2px black, 0 0 15px rgba(0, 0, 255, 0.637), 0 0 5px darkblue;
+	}
+	input, textarea {
+		border: 10px solid #2e2e2f;
+		background-color: buttonface;
+		color: black;
+	}
+	input:focus, textarea:focus {
+		color: black;
+		box-shadow: 1px 1px 2px black, 0 0 15px rgba(0, 0, 255, 0.637), 0 0 5px darkblue;
+	}
+	.form-item{
+		background-color: #2e2e2f;
+		color:white;
+		height: 50px;
+		padding-top: 10px; 
+	}
+
+</style>
+
+			<div class="container text-center" style="margin-top: 2%">		
+				<h2><u>  Concurrent List </u> </h2>
+			</div>
+
+
+
+
+			<div class="container" style="margin-top: 1%; color:rgb(241, 245, 248)">
+				<!-- <form method="POST" action="#"> -->
+					<div class="row text-center">
+					
+						<div class="col-md-1 col-xs-2">
+							</div>
+						<div class="col-md-4 col-xs-2 form-item">
+							Name: <input type="text" id="floatship_name" name="floatship[name]" />
+						</div>
+						<div class="col-md-4 col-xs-3 form-item">
+							Password: <input type="text" id="floatship_password" name="floatship[password]"/>
+						</div>
+						
+						<div class="col-md-2 col-xs-3 form-item">
+							<button onclick="theAjaxGetFloat();" style="width: 120px">Go</button>
+						</div>
+						<div class="col-md-1 col-xs-2">
+						</div>
+					
+					</div>
+				<!-- </form> -->
+			</div>
+
+
+			<div id="floatship_container" class="container text-center form-item" style="margin-top:1%;">
+				<marquee><h6><b>Status:</b>  <span id="status_box"> Awaiting Floatbox Name </span></h6></marquee>
+			</div>
+
+
+			<div id="floatship_container" class="container text-center" style="margin-top: 3%;">
+				<textarea class="container-inner" style="width: 500px; height: 200px;border: 10px solid #2e2e2f;"
+				 id="floatship_float" name="floatship[float]" placeholder="New Entry"></textarea>
+				<button id="floatship_float_button" style="border: 10px solid #2e2e2f;
+				 width: 120px; height:50px; margin-left: 20px;margin-bottom: 50px" class="btn btn-default">
+				 Send
+				</button>
+			</div>
+
+
+
+			<!-- Footer -->
+			<% include ./partials/footer %>
+
+		</div>
+
+		<!-- Footer -->
+		<footer style="color:whitesmoke; bottom: 0%; width: 100%; position: fixed; background-color: #343a40">
+			<!-- Copyright -->
+			<div class="text-center py-3">
+				© 2019 Copyright: SmartList
+			</div>
+			<!-- Copyright -->
+		
+		</footer>
+		<!-- Footer -->
+
+		<script>
+
+			function theAjaxGetFloat(){
+				console.log("theAjaxNotifications called");
+				//$('#subject_container').show();
+				var floatship = {};
+				floatship.name = $('#floatship_name').val();
+				floatship.password = $('#floatship_password').val();
+               
+				console.log("floatship: ",floatship);
+
+
+				$.ajax({
+                        data: { "floatship" : floatship },
+                        dataType: 'json',
+						type: 'POST',
+						url: '/float/'+floatship.name + '/' + floatship.password,
+						
+						success: function(data){
+						   if(data == "not_found" || data == "error" ){
+								console.log("not updated");
+								$('#status_box').html("Error");
+								$('#floatship_container').hide();
+								$('#floatship_password').val('');
+								//theAjaxNotifications();
+							}
+							else if(data == "wrong_password" ){
+								console.log("wrong password");
+								$('#status_box').html("wrong_password");
+								$('#floatship_container').hide();
+								$('#floatship_password').val('');
+								//theAjaxNotifications();
+							}
+							else{
+								console.log("updated",data,data.float);
+								$('#status_box').html("Logged in");
+								$('#floatship_container').show();
+								$('#floatship_float').val(data.float);
+								
+								//$('#floatship_password').val(data.float);
+							}
+						},
+						error: function(){
+							console.log("connection error");
+							$('#status_box').html("connection error");
+							//alert('No data');
+						}
+					});        
+				
+			}
+
+
+            function theAjaxAddFloat(){
+				console.log("theAjaxNotifications called");
+				//$('#subject_container').show();
+				var floatship = {};
+				//floatship.name = $('#floatship_name').val();
+				//floatship.password = $('#floatship_password').val();
+                floatship.float = $('#floatship_float').val();
+               
+				console.log("floatship: ",floatship);
+
+
+				$.ajax({
+                        data: { "floatship" : floatship },
+                        dataType: 'json',
+						type: 'POST',
+						url: '/addfloat',
+
+						//url: '/addfloat/'+floatship.name + '/' + floatship.password,
+						
+						success: function(data){
+						   if(data == "not_found" || data == "error" ){
+								console.log("not updated");
+								$('#status_box').html("Error");
+								$('#floatship_container').hide();
+								$('#floatship_password').val('');
+								//theAjaxNotifications();
+							}
+							else{
+								console.log("updated",data);
+								$('#status_box').html("Updated");
+								$('#floatship_container').show();
+								$('#floatship_float').val(data.float);
+								//$('#floatship_password').val(data.float);
+							}
+						},
+						error: function(){
+							console.log("connection error");
+							$('#status_box').html("connection error");
+							//alert('No data');
+						}
+					});        
+				
+			}
+		
+		</script>
+
+<script type="text/javascript" src="/js/socketio2.0.4.min.js"></script>
+
+
+<script>
+
+	// Connecting to socket.io
+	var socket = io.connect('/');
+	var wid = $('#floatship_name').val();
+
+	//$("#wid").val(wid);
+
+	// The username is requested, sent to the server and displayed in the title
+				//var username = prompt('What\'s your username?');
+	socket.emit('new_client', wid);
+	//document.title = username + ' : ' + document.title;
+
+	// When a message is received it's inserted in the page
+	socket.on('message', function(data) {
+		//var wid2 = window.location.href.split("=")[2];
+		console.log("message data",data,data.wid,wid);
+		if(data.wid == wid )
+			insertMessage( data.message);
+	})
+
+	// When a new client connects, the information is displayed
+	socket.on('new_client', function(data) {
+		console.log("new_client");
+		if(data.wid == wid ){
+			//$('#chat_zone').prepend('<p><em>' + data.username + ' has joined the chat!</em></p>');
+		}
+	})
+
+	// When the form is sent, the message is sent and displayed on the page
+	$('#floatship_float_button').click(function () {
+
+		var message = $('#floatship_float').val();
+		
+		console.log("wid----- ",wid, message);
+		socket.emit('message', message, wid); // Sends the message to the others
+		theAjaxAddFloat();
+
+		//insertMessage( message); // Also displays the message on our page
+		//$('#message').val('').focus(); // Empties the chat form and puts the focus back on it
+		
+		return false; // Blocks 'classic' sending of the form
+	});
+	
+	// Adds a message to the page
+	function insertMessage( message) {
+		//$('#chat_zone').prepend('<p><strong>' + username + ':' + '</strong> ' + message + '</p>');
+		$('#floatship_float').val(message);
+	}
+
+
+</script>
+	</body>
+</html>
