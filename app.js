@@ -20,7 +20,7 @@ var $ = require('jquery');
 
 require('dotenv').config();
 mongoose.set('bufferCommands', false);
-var mongoDB = "mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@cluster0-tynch.mongodb.net/test?retryWrites=true&w=majority";
+var mongoDB = "mongodb+srv://" + process.env.DB_USERNAME + ":" + process.env.DB_PASSWORD + "@cluster0-tynch.mongodb.net/listify?retryWrites=true&w=majority";
 mongoose.connect(mongoDB);
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error: '));
@@ -69,7 +69,10 @@ app.use(function (req, res, next) {
 
 
 //console.log("sj");
-
+var clients = [];
+app.get('/clients', function (req,res) {
+    res.send({clients:clients});
+} );
 
 
 app.use('/', indexRouter);
@@ -101,6 +104,84 @@ console.log("Socketserver running on port:" + port);
 
 var ent = require('ent');
 
+
+
+
+io.on('connection', function (socket) {
+  clients = Object.keys(io.engine.clients);
+   
+  console.log("======>>> new connection: ",socket.id);
+  io.to(socket.id).emit('yourid', socket.id);
+  //io.to(socket.id).emit('allClients', socket.id);
+
+  // When the username is received it’s stored as a session variable and informs the other people
+  socket.on('new_client', function (wid, username) {
+    //username = ent.encode(username);
+    socket.username = username;
+    //console.log("======>>> new client: ", clients);
+    //io.engine === io.eio // => true
+    console.log("======>>> new connection2: ",socket.id);
+
+    console.log("===================>>> new client io socket clients:\n ", Object.keys(io.engine.clients));
+    clients = Object.keys(io.engine.clients);
+
+    socket.broadcast.emit('new_client', {
+      username: socket.username,
+      wid: wid
+    });
+  });
+
+  // When a message is received, the client’s username is retrieved and sent to the other people
+  socket.on('message', function (message, wid) {
+    //message = ent.encode(message);
+    socket.broadcast.emit('message', {
+      username: socket.username,
+      message: message,
+      wid: wid
+    });
+  });
+
+  socket.on('canCommit', function (mySocket_id, wid) {
+    //message = ent.encode(message);
+    socket.broadcast.emit('canCommit', {
+      username: socket.username,
+      requestSocket_id: mySocket_id,
+      wid: wid
+    });
+  });
+
+  socket.on('globalAbort', function (mySocket_id, wid) {
+    //message = ent.encode(message);
+    socket.broadcast.emit('canCommit', {
+      username: socket.username,
+      requestSocket_id: mySocket_id,
+      wid: wid
+    });
+  });
+
+  socket.on('canCommitReply', function (editing_flag, requestSocket_id, mySocket_id, wid) {
+    //message = ent.encode(message);
+    io.to(requestSocket_id).emit('canCommitReply', {
+        username: socket.username,
+        replySocket_id: mySocket_id,
+        wid: wid,
+        editing_flag: editing_flag
+    });
+
+  });
+
+  socket.on('disconnect', function () {
+    //clients.splice(clients.indexOf(socket), 1);
+    console.log("======>>> disconnect client: ", Object.keys(io.engine.clients));
+    clients = Object.keys(io.engine.clients);
+
+  });
+
+});
+
+
+
+/*
 io.on('connection', function (socket) {
 
   // When the username is received it’s stored as a session variable and informs the other people
@@ -131,4 +212,4 @@ io.on('connection', function (socket) {
 
 });
 
-
+*/

@@ -52,25 +52,25 @@
 		text-shadow: 1px 1px 2px black, 0 0 30px blue, 0 0 5px darkblue;
 	}
 	.container-inner {
-		box-shadow: 1px 1px 2px black, 0 0 15px buttonface, 0 0 5px  darkblue;
+		box-shadow: 1px 1px 2px black, 0 0 5px buttonface;
 	}
 	button {
 		border: 10px solid #2e2e2f;
-		box-shadow: 1px 1px 2px black, 0 0 15px buttonface, 0 0 5px  darkblue;
+		box-shadow: 1px 1px 2px black, 0 0 10px buttonface, 0 0 5px  darkblue;
 	}
 	button:hover {
 		color: white;
 		text-shadow: 1px 1px 2px black, 0 0 30px blue, 0 0 5px darkblue;
-		box-shadow: 1px 1px 2px black, 0 0 15px rgba(0, 0, 255, 0.637), 0 0 5px darkblue;
+		box-shadow: 1px 1px 2px black, 0 0 10px rgba(0, 0, 255, 0.637), 0 0 5px darkblue;
 	}
 	input, textarea {
 		border: 10px solid #2e2e2f;
 		background-color: buttonface;
 		color: black;
 	}
-	input:focus, textarea:focus {
+	input:focus {
 		color: black;
-		box-shadow: 1px 1px 2px black, 0 0 15px rgba(0, 0, 255, 0.637), 0 0 5px darkblue;
+		box-shadow: 1px 1px 2px black, 0 0 10px rgba(0, 0, 255, 0.637), 0 0 5px darkblue;
 	}
 	.form-item{
 		background-color: #2e2e2f;
@@ -80,7 +80,17 @@
 	}
 
 </style>
+<script>
+	$(function() {      //aka document.ready
+		$("#floatship_float").focus( function() {
+			//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
+		});
 
+		$("#floatship_float").blur( function() {
+			//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px rgb(17, 235, 17), 0 0 5px darkblue");
+		});
+	});
+</script>
 			<div class="container text-center" style="margin-top: 2%">		
 				<h2><u>  Concurrent List </u> </h2>
 			</div>
@@ -145,6 +155,49 @@
 		<!-- Footer -->
 
 		<script>
+
+			$(document).ready(function(){
+				//$("#floatship_float").prop('disabled', true);
+			})
+
+			$("#floatship_float").focus(function(){
+
+			//	$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px rgb(17, 235, 17), 0 0 5px darkblue");
+
+			})
+
+			async function getClients(){
+				var toReturn = null;
+				$.ajax({
+                        data: { },
+                        dataType: 'json',
+						type: 'GET',
+						url: '/clients',
+						async:false,
+						
+						success: function(data){
+						   if(data == "not_found" || data == "error" ){
+								console.log("not updated");
+								$('#status_box').html("Error");
+								toReturn =  null;
+
+							}
+							else{
+								console.log("Fetched Active Clients",data,data.clients);
+								$('#status_box').html("Fetched Active Clients");
+								toReturn =  data.clients;
+							}
+						},
+						error: function(){
+							console.log("connection error");
+							$('#status_box').html("connection error");
+							toReturn =  null;
+						}
+					}); 
+
+					return toReturn;
+			}
+
 
 			function theAjaxGetFloat(){
 				console.log("theAjaxNotifications called");
@@ -242,60 +295,204 @@
 		
 		</script>
 
-<script type="text/javascript" src="/js/socketio2.0.4.min.js"></script>
+		<script>
+			var username = "";
+		</script>
 
 
-<script>
+		<script type="application/javascript">
+			function getIP(json) {
+			  console.log("My public IP address is: ", json.ip);
+			  username = json.ip;
+			}
+		</script>
 
-	// Connecting to socket.io
-	var socket = io.connect('/');
-	var wid = $('#floatship_name').val();
+		<script type="application/javascript" src="https://api.ipify.org?format=jsonp&callback=getIP"></script>
 
-	//$("#wid").val(wid);
+		<script type="text/javascript" src="/js/socketio2.0.4.min.js"></script>
+		<script>
 
-	// The username is requested, sent to the server and displayed in the title
-				//var username = prompt('What\'s your username?');
-	socket.emit('new_client', wid);
-	//document.title = username + ' : ' + document.title;
+			// Connecting to socket.io
+			var socket = io.connect('/');
+			var wid = $('#floatship_name').val();
 
-	// When a message is received it's inserted in the page
-	socket.on('message', function(data) {
-		//var wid2 = window.location.href.split("=")[2];
-		console.log("message data",data,data.wid,wid);
-		if(data.wid == wid )
-			insertMessage( data.message);
-	})
+			//$("#wid").val(wid);
 
-	// When a new client connects, the information is displayed
-	socket.on('new_client', function(data) {
-		console.log("new_client");
-		if(data.wid == wid ){
-			//$('#chat_zone').prepend('<p><em>' + data.username + ' has joined the chat!</em></p>');
-		}
-	})
+			// The username is requested, sent to the server and displayed in the title
+			//var username = prompt('What\'s your username?');
 
-	// When the form is sent, the message is sent and displayed on the page
-	$('#floatship_float_button').click(function () {
+			$.getJSON('https://api.ipify.org?format=json', function(data){
+				console.log("=======>ip: ",data.ip);
+				username = data.ip;
+			});
 
-		var message = $('#floatship_float').val();
-		
-		console.log("wid----- ",wid, message);
-		socket.emit('message', message, wid); // Sends the message to the others
-		theAjaxAddFloat();
+ 			console.log("=========>>> Username: ", username);
 
-		//insertMessage( message); // Also displays the message on our page
-		//$('#message').val('').focus(); // Empties the chat form and puts the focus back on it
-		
-		return false; // Blocks 'classic' sending of the form
-	});
-	
-	// Adds a message to the page
-	function insertMessage( message) {
-		//$('#chat_zone').prepend('<p><strong>' + username + ':' + '</strong> ' + message + '</p>');
-		$('#floatship_float').val(message);
-	}
+			socket.emit('new_client', wid, username);
+			document.title = 'Floatex : ' + document.title;
+
+			var clients = [];
+			(async () => {
+					clients = await getClients();
+					console.log("=============> All Clients", clients);
+				})();
+			var clients_replied = [];
+			console.log("=============>Clients Replied", clients_replied);
+
+			var mySocket_id = "";
+			socket.on('yourid', function(data) {
+				console.log("====> my socket id data",data);
+				mySocket_id = data;
+			})
+
+			var editing_flag = false;
+			function checkClientsReplied() {
+				console.log("Waiting for n sec.");
+				$('#status_box').html("Awaiting for reply");
+
+					setTimeout(function () {
+						console.log("Starting checking...");
+						var canCommit = true;
+
+						console.log("Comparing length...",clients_replied.length , clients.length);
+						if(clients_replied.length != clients.length-1){
+							canCommit = false;
+							socket.emit('globalAbort', mySocket_id, wid);
+							$('#status_box').html("globalAbort");
+							
+							editing_flag = false;
+							$("#floatship_float").prop('disabled', false);
+							$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+							
+						}
+						else{
+
+							for( x in clients_replied){
+								console.log("xval",clients_replied[x]["rid"]);
+								if(clients_replied[x]["rid"]){
+									canCommit = false;
+								}
+							}
+							if(canCommit)
+							{
+								console.log("canCommit == yes");
+								$('#status_box').html("Can Commit");
+								$("#floatship_float").prop('disabled', false);
+								$("#floatship_float").focus();
+								$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px green, 0 0 5px darkblue");
+
+							}
+							else{
+								console.log("canCommit == no");
+								$('#status_box').html("Can't Commit");
+								editing_flag = false;
+								$("#floatship_float").prop('disabled', true);
+								$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
+							}
+						}
+
+						
+						return canCommit;
+						
+					}, 2000);
+				};
+
+			
+			$("#floatship_float").click(function(){
+				$("#floatship_float").prop('disabled', true);
+				$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
+				clients_replied = [];
+				socket.emit('canCommit', mySocket_id, wid); // Sends the message to the others
+				editing_flag = true;
+
+				//var canCommit = 
+				checkClientsReplied();
+
+				
+
+				//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px rgb(17, 235, 17), 0 0 5px darkblue");
+			})
+
+			socket.on('canCommit', function(data) {
+				console.log("canCommit data",data,data.wid,wid);
+				if(data.wid == wid ){
+					socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid);
+				}
+			})
+
+			
+
+			socket.on('canCommitReply', function(data) {
+				console.log("canCommitReply data",data,data.wid,wid);
+				//var dictind = {}
+				if(data.wid == wid ){
+					var rid = data.replySocket_id;
+					//dictind.rid= editing_flag;
+					clients_replied.push({rid: data.editing_flag});
+				}
+			
+			})
+
+			socket.on('globalAbort', function(data) {
+				console.log("globalAbort data",data,data.wid,wid);
+				if(data.wid == wid ){
+					$('#status_box').html("globalAbort");
+					//insertMessage( data.message, data.username);
+					$("#floatship_float").prop('disabled', false);
+					$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+				}
+			});
+
+			// When a message is received it's inserted in the page
+			socket.on('message', function(data) {
+				//var wid2 = window.location.href.split("=")[2];
+				console.log("message data",data,data.wid,wid);
+				if(data.wid == wid ){
+					insertMessage( data.message, data.username);
+					$("#floatship_float").prop('disabled', false);
+					$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+				}
+
+			})
+
+			// When a new client connects, the information is displayed
+			socket.on('new_client', function(data) {
+				console.log("new_client");
+				if(data.wid == wid ){
+					(async () => {
+					clients = await getClients();
+					console.log("=============> All Clients new", clients);
+				})();
+					//$('#chat_zone').prepend('<p><em>' + data.username + ' has joined the chat!</em></p>');
+				}
+			})
+
+			// When the form is sent, the message is sent and displayed on the page
+			$('#floatship_float_button').click(function () {
+
+				var message = $('#floatship_float').val();
+				
+				console.log("wid----- ",wid, message);
+				socket.emit('message', message, wid); // Sends the message to the others
+				theAjaxAddFloat();
+				$("#floatship_float").prop('disabled', false);
+				$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+				editing_flag = false;
+
+				//insertMessage( message); // Also displays the message on our page
+				//$('#message').val('').focus(); // Empties the chat form and puts the focus back on it
+				
+				return false; // Blocks 'classic' sending of the form
+			});
+			
+			// Adds a message to the page
+			function insertMessage( message, username) {
+				//$('#chat_zone').prepend('<p><strong>' + username + ':' + '</strong> ' + message + '</p>');
+				$('#status_box').html("Updated");
+				$('#floatship_float').val(message);
+			}
 
 
-</script>
+		</script>
 	</body>
 </html>
