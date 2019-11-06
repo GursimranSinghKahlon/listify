@@ -183,6 +183,7 @@
 
 			async function getClients(){
 				var toReturn = null;
+				await wait(3000);
 				$.ajax({
                         data: { },
                         dataType: 'json',
