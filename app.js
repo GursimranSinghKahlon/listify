@@ -70,8 +70,9 @@ app.use(function (req, res, next) {
 
 //console.log("sj");
 var clients = [];
+clients_dict = {};
 app.get('/clients', function (req,res) {
-    res.send({clients:clients});
+    res.send({clients:clients, clients_dict: clients_dict});
 } );
 
 
@@ -124,6 +125,10 @@ io.on('connection', function (socket) {
 
     console.log("===================>>> new client io socket clients:\n ", Object.keys(io.engine.clients));
     clients = Object.keys(io.engine.clients);
+
+    clients_dict[String(socket.id)] = wid;
+    console.log("------------->>>> clients dict: ",clients_dict);
+
 
     socket.broadcast.emit('new_client', {
       username: socket.username,
@@ -198,6 +203,7 @@ io.on('connection', function (socket) {
     //clients.splice(clients.indexOf(socket), 1);
     console.log("======>>> disconnect client: ", Object.keys(io.engine.clients));
     clients = Object.keys(io.engine.clients);
+    delete clients_dict[String(socket.id)];
 
   });
 

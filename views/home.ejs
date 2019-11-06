@@ -200,7 +200,17 @@
 							else{
 								console.log("Fetched Active Clients",data,data.clients);
 								$('#status_box').html("Fetched Active Clients");
-								toReturn =  data.clients;
+								clients_relevant = []
+								for (var key in data.clients_dict) {
+									console.log(key, data.clients_dict[key]);
+									if(data.clients_dict[key] == wid){
+										clients_relevant.push(key);
+									}
+								}
+								console.log("Relevant Active Clients",clients_relevant);
+
+								toReturn =  clients_relevant;
+								clients = clients_relevant;
 							}
 						},
 						error: function(){
@@ -215,6 +225,9 @@
 
 
 			function theAjaxGetFloat(){
+				wid = $('#floatship_name').val();
+				socket.emit('new_client', wid, username);
+				getClients();
 				console.log("theAjaxNotifications called");
 				//$('#subject_container').show();
 				var floatship = {};
@@ -250,6 +263,8 @@
 								$('#status_box').html("Logged in");
 								$('#floatship_container').show();
 								$('#floatship_float').val(data.float);
+							
+
 								
 								//$('#floatship_password').val(data.float);
 							}
@@ -347,13 +362,13 @@
 
  			console.log("=========>>> Username: ", username);
 
-			socket.emit('new_client', wid, username);
+			//socket.emit('new_client', wid, username);
 			document.title = 'Floatex : ' + document.title;
 
 			var clients = [];
 			(async () => {
 					clients = await getClients();
-					console.log("=============> All Clients", clients);
+					console.log("=============> All Clients at starting", clients);
 				})();
 			var clients_replied = [];
 			console.log("=============>Clients Replied", clients_replied);
@@ -519,7 +534,7 @@
 			})
 
 			// When a new client connects, the information is displayed
-			socket.on('new_client', function(data) {
+			socket.on('new_client', async function(data) {
 				console.log("new_client");
 				if(data.wid == wid ){
 					(async () => {
