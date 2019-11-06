@@ -150,6 +150,15 @@ io.on('connection', function (socket) {
     });
   });
 
+  socket.on('preCommit', function (mySocket_id, wid) {
+    //message = ent.encode(message);
+    socket.broadcast.emit('preCommit', {
+      username: socket.username,
+      requestSocket_id: mySocket_id,
+      wid: wid
+    });
+  });
+
   socket.on('globalAbort', function (mySocket_id, wid) {
     //message = ent.encode(message);
     socket.broadcast.emit('canCommit', {
@@ -161,13 +170,28 @@ io.on('connection', function (socket) {
 
   socket.on('canCommitReply', function (editing_flag, requestSocket_id, mySocket_id, wid) {
     //message = ent.encode(message);
+    var date = new Date();
+    var timestamp = date.getTime();
     io.to(requestSocket_id).emit('canCommitReply', {
         username: socket.username,
         replySocket_id: mySocket_id,
         wid: wid,
-        editing_flag: editing_flag
+        editing_flag: editing_flag,
+        timestamp: timestamp
     });
+  });
 
+  socket.on('preCommitReply', function ( requestSocket_id, mySocket_id, wid) {
+    //message = ent.encode(message);
+    var date = new Date();
+    var timestamp = date.getTime();
+    io.to(requestSocket_id).emit('preCommitReply', {
+        username: socket.username,
+        replySocket_id: mySocket_id,
+        wid: wid,
+        editing_flag: false,
+        timestamp: timestamp
+    });
   });
 
   socket.on('disconnect', function () {

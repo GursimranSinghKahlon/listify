@@ -123,19 +123,34 @@
 
 
 			<div id="floatship_container" class="container text-center form-item" style="margin-top:1%;">
-				<marquee><h6><b>Status:</b>  <span id="status_box"> Awaiting Floatbox Name </span></h6></marquee>
+				<!-- <marquee> -->
+					<h6><b>Status:</b>  <span id="status_box"> Awaiting Floatbox Name </span></h6>
+				<!-- </marquee> -->
 			</div>
 
+<div class="row">
 
+		<div class="col-md-7 col-xs-6">
 			<div id="floatship_container" class="container text-center" style="margin-top: 3%;">
-				<textarea class="container-inner" style="width: 500px; height: 200px;border: 10px solid #2e2e2f;"
-				 id="floatship_float" name="floatship[float]" placeholder="New Entry"></textarea>
+				<textarea class="container-inner" style="width: 250px; height: 200px;border: 10px solid #2e2e2f;"
+					id="floatship_float" name="floatship[float]" placeholder="New Entry">
+				</textarea>
 				<button id="floatship_float_button" style="border: 10px solid #2e2e2f;
-				 width: 120px; height:50px; margin-left: 20px;margin-bottom: 50px" class="btn btn-default">
-				 Send
+					width: 120px; height:50px; margin-left: 20px;margin-bottom: 50px" class="btn btn-default">
+					Send
 				</button>
 			</div>
+		</div>
 
+		<div class="col-md-5 col-xs-6">
+			<div id="floatship_container_copy" class="container text-center" style="margin-top: 3%;margin-bottom: 10%;">
+				<textarea class="container-inner" style="width: 250px; height: 200px;border: 10px solid #2e2e2f;"
+					id="floatship_float_copy" name="floatship[float_copy]" placeholder="Local Copy" disabled>
+				</textarea>		
+			</div>
+		</div>
+
+</div>
 
 
 			<!-- Footer -->
@@ -311,6 +326,10 @@
 
 		<script type="text/javascript" src="/js/socketio2.0.4.min.js"></script>
 		<script>
+			
+			function updateStatus(message){
+				$('#status_box').html(message);
+			}
 
 			// Connecting to socket.io
 			var socket = io.connect('/');
@@ -346,11 +365,20 @@
 			})
 
 			var editing_flag = false;
-			function checkClientsReplied() {
+
+			function wait (timeout) {
+			return new Promise((resolve) => {
+				setTimeout(() => {
+				resolve()
+				}, timeout)
+			})
+			}
+			async function checkClientsReplied() {
 				console.log("Waiting for n sec.");
 				$('#status_box').html("Awaiting for reply");
+				await wait(5000);
 
-					setTimeout(function () {
+					//setTimeout(function () {
 						console.log("Starting checking...");
 						var canCommit = true;
 
@@ -363,16 +391,33 @@
 							editing_flag = false;
 							$("#floatship_float").prop('disabled', false);
 							$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
-							
+							return canCommit;
 						}
 						else{
 
+							var count_canCommit = 0;
+
 							for( x in clients_replied){
 								console.log("xval",clients_replied[x]["rid"]);
-								if(clients_replied[x]["rid"]){
-									canCommit = false;
+								if(clients_replied[x]["rid"]){	//rid=true : person is editing
+									//canCommit = false;
+								}
+								else{
+									count_canCommit++;
 								}
 							}
+
+							if(count_canCommit >= (clients_replied.length - count_canCommit)){
+								canCommit = true;
+								console.log("canCommit == yes");
+							}
+							else{
+								canCommit = false;
+								console.log("canCommit == no");
+							}
+							return canCommit;
+
+							/*
 							if(canCommit)
 							{
 								console.log("canCommit == yes");
@@ -389,49 +434,65 @@
 								$("#floatship_float").prop('disabled', true);
 								$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
 							}
+							*/
 						}
 
 						
-						return canCommit;
 						
-					}, 2000);
+						
+					//}, 5000);
 				};
 
+
+
+			var timestamp_init = null;
 			
-			$("#floatship_float").click(function(){
-				$("#floatship_float").prop('disabled', true);
-				$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
-				clients_replied = [];
-				socket.emit('canCommit', mySocket_id, wid); // Sends the message to the others
-				editing_flag = true;
-
-				//var canCommit = 
-				checkClientsReplied();
-
-				
-
-				//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px rgb(17, 235, 17), 0 0 5px darkblue");
-			})
+			
 
 			socket.on('canCommit', function(data) {
-				console.log("canCommit data",data,data.wid,wid);
+				console.log("canCommit data",data,data.wid,wid, timestamp_init);
 				if(data.wid == wid ){
-					socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid);
+					updateStatus(" canCommitReply sent");
+					if(editing_flag){
+						editing_flag = !confirm("canCommitReply ?");
+						console.log("canCommit confirmation!");
+						socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid, timestamp_init);
+					}
+					else{
+						socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid, timestamp_init);				
+					}
 				}
 			})
 
-			
+			socket.on('preCommit', function(data) {
+				console.log("preCommit data",data,data.wid,wid, timestamp_init);
+				if(data.wid == wid ){
+					$("#floatship_float").prop('disabled', true);
+					$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px orange, 0 0 5px darkblue");
+					updateStatus("Ready for Commit");
+					socket.emit('preCommitReply', data.requestSocket_id, mySocket_id, wid, timestamp_init);
+				}
+			})			
 
 			socket.on('canCommitReply', function(data) {
-				console.log("canCommitReply data",data,data.wid,wid);
+				console.log("canCommitReply data",data,data.wid,wid,data.timestamp_init);
 				//var dictind = {}
 				if(data.wid == wid ){
 					var rid = data.replySocket_id;
 					//dictind.rid= editing_flag;
 					clients_replied.push({rid: data.editing_flag});
 				}
-			
 			})
+
+			socket.on('preCommitReply', function(data) {
+				console.log("preCommitReply data",data,data.wid,wid,data.timestamp_init);
+				//var dictind = {}
+				if(data.wid == wid ){
+					var rid = data.replySocket_id;
+					//dictind.rid= editing_flag;
+					clients_replied.push({rid: data.editing_flag});
+				}
+			})			
 
 			socket.on('globalAbort', function(data) {
 				console.log("globalAbort data",data,data.wid,wid);
@@ -447,7 +508,9 @@
 			socket.on('message', function(data) {
 				//var wid2 = window.location.href.split("=")[2];
 				console.log("message data",data,data.wid,wid);
+				
 				if(data.wid == wid ){
+					updateStatus("updated");
 					insertMessage( data.message, data.username);
 					$("#floatship_float").prop('disabled', false);
 					$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
@@ -467,17 +530,81 @@
 				}
 			})
 
-			// When the form is sent, the message is sent and displayed on the page
-			$('#floatship_float_button').click(function () {
 
-				var message = $('#floatship_float').val();
+
+
+
+
+
+
+			$("#floatship_float").click(function(){
+				//$("#floatship_float").prop('disabled', true);
+				//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
+				//clients_replied = [];
+				editing_flag = true;
+
+				//checkClientsReplied();
+				$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px rgb(17, 235, 17), 0 0 5px darkblue");
+			})
+
+			// When the form is sent, the message is sent and displayed on the page
+			$('#floatship_float_button').click(async function () {
+
+				$('#floatship_float_copy').val($('#floatship_float').val());
+				$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
+
+				clients_replied = [];
+
+				var date = new Date();
+				timestamp_init = date.getTime();
+				updateStatus("sending canCommit request");
+				socket.emit('canCommit', mySocket_id, wid, timestamp_init); // Sends the message to the others
 				
-				console.log("wid----- ",wid, message);
-				socket.emit('message', message, wid); // Sends the message to the others
-				theAjaxAddFloat();
-				$("#floatship_float").prop('disabled', false);
-				$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
-				editing_flag = false;
+
+				updateStatus("waiting for canCommit replies");
+				var canCommitResult = await checkClientsReplied();
+
+				//setTimeout(async function () {
+
+					console.log("canCommitResult: ",canCommitResult);
+					if(canCommitResult){
+						console.log("sending preCommiting request");
+
+						clients_replied = [];
+						timestamp_init = date.getTime();
+						updateStatus("sending preCommit request");
+						socket.emit('preCommit', mySocket_id, wid, timestamp_init); // Sends the message to the others
+						
+						updateStatus("waiting for preCommit replies");
+						var preCommitResult = await checkClientsReplied();
+						//setTimeout(async function () {
+							if(preCommitResult){
+
+								console.log("Committing data");
+								updateStatus("Committing data");
+
+								var message = $('#floatship_float').val();
+								console.log("wid-----committing message... ",wid, message);
+								socket.emit('message', message, wid); // Sends the message to the others
+								theAjaxAddFloat();
+								$("#floatship_float").prop('disabled', false);
+								$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+								editing_flag = false;
+							}
+							else{
+								console.log("pre Commit failed");
+								updateStatus("pre Commit failed");
+								$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
+							}
+						//},6000);
+					}
+					else{
+						console.log("can Commit failed");
+						updateStatus("can Commit failed");
+						$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
+					}
+
+				//},6000);
 
 				//insertMessage( message); // Also displays the message on our page
 				//$('#message').val('').focus(); // Empties the chat form and puts the focus back on it
@@ -489,6 +616,7 @@
 			function insertMessage( message, username) {
 				//$('#chat_zone').prepend('<p><strong>' + username + ':' + '</strong> ' + message + '</p>');
 				$('#status_box').html("Updated");
+				$('#floatship_float_copy').val($('#floatship_float').val());
 				$('#floatship_float').val(message);
 			}
 
