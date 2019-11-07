@@ -280,6 +280,70 @@
 			}
 
 
+
+			function theAjaxGetFloatGlobal(){
+				wid = $('#floatship_name').val();
+				//socket.emit('new_client', wid, username);
+				getClients();
+				console.log("theAjaxGetFloatGlobal called");
+				//$('#subject_container').show();
+				var floatship = {};
+				floatship.name = $('#floatship_name').val();
+				floatship.password = $('#floatship_password').val();
+               
+				console.log("floatship: ",floatship);
+
+
+				$.ajax({
+                        data: { "floatship" : floatship },
+                        dataType: 'json',
+						type: 'POST',
+						url: '/float/'+floatship.name + '/' + floatship.password,
+						
+						success: function(data){
+						   if(data == "not_found" || data == "error" ){
+								console.log("not updated");
+								$('#status_box').html("Error");
+								$('#floatship_container').hide();
+								$('#floatship_password').val('');
+								//theAjaxNotifications();
+							}
+							else if(data == "wrong_password" ){
+								console.log("wrong password");
+								$('#status_box').html("wrong_password");
+								$('#floatship_container').hide();
+								$('#floatship_password').val('');
+								//theAjaxNotifications();
+							}
+							else{
+								console.log("updated",data,data.float);
+								$('#floatship_container').show();
+								$('#floatship_float').val(data.float);
+								$('#status_box').html("Updated");
+
+								var message = data.float;
+								console.log("wid-----committing message... ",wid, message);
+								socket.emit('message', message, wid); // Sends the message to the others
+								theAjaxAddFloat();
+								$("#floatship_float").prop('disabled', false);
+								$("#floatship_float_button").prop('disabled', false);
+								$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+								editing_flag = false;
+
+								
+								//$('#floatship_password').val(data.float);
+							}
+						},
+						error: function(){
+							console.log("connection error");
+							$('#status_box').html("connection error");
+							//alert('No data');
+						}
+					});        
+				
+			}
+
+
             function theAjaxAddFloat(){
 				console.log("theAjaxNotifications called");
 				//$('#subject_container').show();
@@ -398,15 +462,10 @@
 						console.log("Starting checking...");
 						var canCommit = true;
 
-						console.log("Comparing length...",clients_replied.length , clients.length);
+						console.log("Comparing length...",clients_replied.length , clients.length-1);
 						if(clients_replied.length != clients.length-1){
 							canCommit = false;
-							socket.emit('globalAbort', mySocket_id, wid);
-							$('#status_box').html("globalAbort");
 							
-							editing_flag = false;
-							$("#floatship_float").prop('disabled', false);
-							$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
 							return canCommit;
 						}
 						else{
@@ -423,7 +482,9 @@
 								}
 							}
 
-							if(count_canCommit >= (clients_replied.length - count_canCommit)){
+							//if(count_canCommit >= (clients_replied.length - count_canCommit)){
+							if(count_canCommit == clients_replied.length){
+
 								canCommit = true;
 								console.log("canCommit == yes");
 							}
@@ -466,6 +527,7 @@
 			
 
 			socket.on('canCommit', function(data) {
+				
 				console.log("canCommit data",data,data.wid,wid, timestamp_init);
 				if(data.wid == wid ){
 					updateStatus(" canCommitReply sent");
@@ -473,21 +535,58 @@
 						editing_flag = !confirm("canCommitReply ?");
 						console.log("canCommit confirmation!");
 						socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid, timestamp_init);
+						if(!editing_flag){
+							updateStatus("Waiting state");
+							$("#floatship_float").prop('disabled', true);
+							$("#floatship_float_button").prop('disabled', true);
+							$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px orange, 0 0 5px darkblue");	
+						}
 					}
 					else{
-						socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid, timestamp_init);				
+						socket.emit('canCommitReply', editing_flag, data.requestSocket_id, mySocket_id, wid, timestamp_init);
+						updateStatus("Waiting state");
+						$("#floatship_float").prop('disabled', true);
+						$("#floatship_float_button").prop('disabled', true);
+						$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px orange, 0 0 5px darkblue");				
 					}
 				}
+
+
+				setTimeout(function () {
+					if($("#status_box").html() == "Waiting state"){
+						console.log("Waiting state timeout");
+						socket.emit('globalAbort', mySocket_id, wid);
+						updateStatus("Waiting timeout: globalAbort executed");
+						console.log("Waiting timeout: globalAbort executed");
+						editing_flag = false;
+						$("#floatship_float").prop('disabled', false);
+						$("#floatship_float_button").prop('disabled', false);
+						$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+					}
+				}, 10000);
 			})
 
 			socket.on('preCommit', function(data) {
 				console.log("preCommit data",data,data.wid,wid, timestamp_init);
 				if(data.wid == wid ){
 					$("#floatship_float").prop('disabled', true);
+					$("#floatship_float_button").prop('disabled', true);
 					$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px orange, 0 0 5px darkblue");
-					updateStatus("Ready for Commit");
+					updateStatus("preCommit state");
+					console.log("preCommit state");
 					socket.emit('preCommitReply', data.requestSocket_id, mySocket_id, wid, timestamp_init);
 				}
+
+				setTimeout(function () {
+					if($("#status_box").html() == "preCommit state"){
+						console.log("preCommit state timeout");
+						updateStatus("preCommit timeout: globalCommit executed");
+						console.log("preCommit timeout: globalCommit executed");
+
+						theAjaxGetFloatGlobal();
+
+					}
+				}, 10000);
 			})			
 
 			socket.on('canCommitReply', function(data) {
@@ -516,6 +615,7 @@
 					$('#status_box').html("globalAbort");
 					//insertMessage( data.message, data.username);
 					$("#floatship_float").prop('disabled', false);
+					$("#floatship_float_button").prop('disabled', false);
 					$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
 				}
 			});
@@ -529,6 +629,7 @@
 					updateStatus("updated");
 					insertMessage( data.message, data.username);
 					$("#floatship_float").prop('disabled', false);
+					$("#floatship_float_button").prop('disabled', false);
 					$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
 				}
 
@@ -567,17 +668,23 @@
 			$('#floatship_float_button').click(async function () {
 
 				$('#floatship_float_copy').val($('#floatship_float').val());
-				$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
+				//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px yellow, 0 0 5px darkblue");
+
+				$("#floatship_float").prop('disabled', true);
+				$("#floatship_float_button").prop('disabled', true);
+				$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px orange, 0 0 5px darkblue");	
 
 				clients_replied = [];
 
 				var date = new Date();
 				timestamp_init = date.getTime();
 				updateStatus("sending canCommit request");
+				console.log("sending canCommit request");
 				socket.emit('canCommit', mySocket_id, wid, timestamp_init); // Sends the message to the others
 				
 
 				updateStatus("waiting for canCommit replies");
+				console.log("waiting for canCommit replies");
 				var canCommitResult = await checkClientsReplied();
 
 				//setTimeout(async function () {
@@ -589,35 +696,55 @@
 						clients_replied = [];
 						timestamp_init = date.getTime();
 						updateStatus("sending preCommit request");
+						console.log("sending preCommit request");
 						socket.emit('preCommit', mySocket_id, wid, timestamp_init); // Sends the message to the others
 						
 						updateStatus("waiting for preCommit replies");
+						console.log("waiting for preCommit replies");
 						var preCommitResult = await checkClientsReplied();
 						//setTimeout(async function () {
 							if(preCommitResult){
 
-								console.log("Committing data");
 								updateStatus("Committing data");
+								console.log("Committing data");
+
+								theAjaxAddFloat();
+								await wait(2000);
 
 								var message = $('#floatship_float').val();
 								console.log("wid-----committing message... ",wid, message);
 								socket.emit('message', message, wid); // Sends the message to the others
-								theAjaxAddFloat();
+								
 								$("#floatship_float").prop('disabled', false);
+								$("#floatship_float_button").prop('disabled', false);
 								$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
 								editing_flag = false;
 							}
 							else{
 								console.log("pre Commit failed");
-								updateStatus("pre Commit failed");
-								$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
+								socket.emit('globalAbort', mySocket_id, wid);
+								updateStatus("globalAbort(not Updated)");
+								console.log("globalAbort");
+								editing_flag = false;
+								$("#floatship_float").prop('disabled', false);
+								$("#floatship_float_button").prop('disabled', false);
+								$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+								//updateStatus("pre Commit failed");
+								//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
 							}
 						//},6000);
 					}
 					else{
 						console.log("can Commit failed");
-						updateStatus("can Commit failed");
-						$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
+						socket.emit('globalAbort', mySocket_id, wid);
+						updateStatus("globalAbort(not Updated)");
+						console.log("globalAbort");
+						editing_flag = false;
+						$("#floatship_float").prop('disabled', false);
+						$("#floatship_float_button").prop('disabled', false);
+						$("#floatship_float").css("box-shadow", "1px 1px 2px black, 0 0 5px buttonface");
+						//updateStatus("can Commit failed");
+						//$("#floatship_float").css("box-shadow","1px 1px 2px black, 0 0 15px red, 0 0 5px darkblue");
 					}
 
 				//},6000);

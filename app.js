@@ -166,7 +166,7 @@ io.on('connection', function (socket) {
 
   socket.on('globalAbort', function (mySocket_id, wid) {
     //message = ent.encode(message);
-    socket.broadcast.emit('canCommit', {
+    socket.broadcast.emit('globalAbort', {
       username: socket.username,
       requestSocket_id: mySocket_id,
       wid: wid
