@@ -16,7 +16,7 @@
     "cookie-parser": "~1.4.3",
     "cryptiles": "^4.1.2",
     "debug": "~2.6.9",
-    "dompurify": "^1.0.10",
+    "dompurify": "^2.0.3",
     "dotenv": "^8.1.0",
     "ejs": "~2.5.7",
     "email-existence": "^0.1.6",
