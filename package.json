@@ -25,7 +25,7 @@
     "express-fileupload": "^1.1.1-alpha.1",
     "express-session": "^1.15.6",
     "extglob": "^3.0.0",
-    "file-type": "^12.3.0",
+    "file-type": "^16.5.4",
     "find-or-create": "*",
     "formidable": "^1.2.1",
     "fs": "0.0.1-security",
